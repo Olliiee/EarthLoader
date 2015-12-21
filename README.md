@@ -1,5 +1,5 @@
 # EarthLoader
-Loading images of the earth from http://epic.gsfc.nasa.gov/
+Load the latest earth image from http://epic.gsfc.nasa.gov/ and set it as a wallpaper.
 
 Inspired by https://gist.github.com/Marcus10110/756783b0a2fa875487a8
 
