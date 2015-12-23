@@ -2,12 +2,30 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 
 namespace EarthLoader
 {
     internal class Program
     {
+        #region Private Fields
+
+        private const Int32 SW_MINIMIZE = 6;
+
+        #endregion Private Fields
+
+        #region Private Methods
+
+        [DllImport("Kernel32.dll", CallingConvention = CallingConvention.StdCall, SetLastError = true)]
+        private static extern IntPtr GetConsoleWindow();
+
+        [DllImport("User32.dll", CallingConvention = CallingConvention.StdCall, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool ShowWindow([In] IntPtr hWnd, [In] Int32 nCmdShow);
+
+        #endregion Private Methods
+
         #region Private Methods
 
         private static void FindLatestImage()
@@ -24,29 +42,36 @@ namespace EarthLoader
                 {
                     DateTime targeDate = DateTime.Today.AddDays(0 - daysOld); //yesterday.
 
-                    String api_url = "http://epic.gsfc.nasa.gov/api/images.php?date=" + targeDate.ToString("yyyyMMdd");
-                    var raw_jason = client.DownloadString(api_url);
-
                     try
                     {
-                        var output = JsonConvert.DeserializeObject<IEnumerable<EarthImage>>(raw_jason);
-                        if (output.Any())
+                        string api_url = "http://epic.gsfc.nasa.gov/api/images.php?date=" + targeDate.ToString("yyyyMMdd");
+                        var raw_jason = client.DownloadString(api_url);
+
+                        try
                         {
-                            Console.WriteLine("Found at " + targeDate.ToString("yyyy-MM-dd"));
-                            LoadEarthImage(output, client);
-                            runner = false;
-                            break;
+                            var output = JsonConvert.DeserializeObject<IEnumerable<EarthImage>>(raw_jason);
+                            if (output.Any())
+                            {
+                                Console.WriteLine("Found at " + targeDate.ToString("yyyy-MM-dd"));
+                                LoadEarthImage(output, client);
+                                runner = false;
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Nothing found at " + targeDate.ToString("yyyy-MM-dd"));
+                                daysOld++;
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
                             Console.WriteLine("Nothing found at " + targeDate.ToString("yyyy-MM-dd"));
                             daysOld++;
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        Console.WriteLine("Nothing found at " + targeDate.ToString("yyyy-MM-dd"));
-                        daysOld++;
+                        Console.WriteLine("Unable to establish a connection.");
                     }
                 }
             }
@@ -68,7 +93,14 @@ namespace EarthLoader
 
         private static void Main(string[] args)
         {
+            MinimizeConsoleWindow();
             FindLatestImage();
+        }
+
+        private static void MinimizeConsoleWindow()
+        {
+            IntPtr hWndConsole = GetConsoleWindow();
+            ShowWindow(hWndConsole, SW_MINIMIZE);
         }
 
         #endregion Private Methods
