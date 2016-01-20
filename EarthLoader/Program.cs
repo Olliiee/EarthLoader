@@ -32,7 +32,7 @@ namespace EarthLoader
         {
             bool runner = true;
             WebClient client = new WebClient();
-            int daysOld = 2;
+            int daysOld = 0;
 
             Console.WriteLine("Checking for the latest earth image ...");
 
@@ -86,7 +86,7 @@ namespace EarthLoader
 
             string imageUrl = @"http://epic.gsfc.nasa.gov/epic-archive/png/" + earth.image + ".png";
 
-            Console.WriteLine("Loading image ...");
+            Console.WriteLine("Loading image ... " + imageUrl);
             Wallpaper.Set(imageUrl, Wallpaper.Style.Filled, client);
             Console.WriteLine("Done.");
         }
