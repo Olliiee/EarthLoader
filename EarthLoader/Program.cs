@@ -33,6 +33,7 @@ namespace EarthLoader
             bool runner = true;
             WebClient client = new WebClient();
             int daysOld = 0;
+            int maxRetry = 0;
 
             Console.WriteLine("Checking for the latest earth image ...");
 
@@ -71,8 +72,19 @@ namespace EarthLoader
                     }
                     catch (Exception)
                     {
+                        maxRetry++;
                         Console.WriteLine("Unable to establish a connection.");
+
+                        if (maxRetry == 5)
+                        {
+                            break;
+                        }
                     }
+                }
+                else
+                {
+                    runner = false;
+                    break;
                 }
             }
             while (runner);
