@@ -53,9 +53,11 @@ namespace EarthLoader
                             var output = JsonConvert.DeserializeObject<IEnumerable<EarthImage>>(raw_jason);
                             if (output.Any())
                             {
+                                runner = false;
+                                daysOld = 22;
                                 Console.WriteLine("Found at " + targeDate.ToString("yyyy-MM-dd"));
                                 LoadEarthImage(output, client);
-                                runner = false;
+                                
                                 break;
                             }
                             else
