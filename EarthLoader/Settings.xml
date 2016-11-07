@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<earth>
+  <searchurl>http://epic.gsfc.nasa.gov/api/images.php?date=</searchurl>
+  <imagepath>http://epic.gsfc.nasa.gov/epic-archive/png/</imagepath>
+  <wallpaperstyle>
+    <style TileWallpaper="0" WallpaperStyle="10" active="true">Filled</style>
+    <style TileWallpaper="1" WallpaperStyle="1" active="false">Tiled</style>
+    <style TileWallpaper="0" WallpaperStyle="2" active="false">Stretched</style>
+    <style TileWallpaper="0" WallpaperStyle="1" active="false">Centered</style>
+  </wallpaperstyle>
+  <besttime active="true" maxhours="4">12:00:00</besttime>
+</earth>

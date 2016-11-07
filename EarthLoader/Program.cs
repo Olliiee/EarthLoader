@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Xml.Linq;
 using Newtonsoft.Json;
 
 namespace EarthLoader
@@ -28,89 +30,194 @@ namespace EarthLoader
 
         #region Private Methods
 
+        /// <summary>
+        /// Find the latest NASA image.
+        /// </summary>
         private static void FindLatestImage()
         {
             bool runner = true;
             WebClient client = new WebClient();
             int daysOld = 0;
             int maxRetry = 0;
+            XDocument xmlDocument = LoadXmlFile();
 
-            Console.WriteLine("Checking for the latest earth image ...");
-
-            do
+            // If the settings.xml file is available go on.
+            if (xmlDocument != null)
             {
-                if (daysOld < 21)
-                {
-                    DateTime targeDate = DateTime.Today.AddDays(0 - daysOld); //yesterday.
+                Console.WriteLine("Checking for the latest earth image ...");
 
-                    try
+                do
+                {
+                    // Only checking the last 21 days.
+                    if (daysOld < 21)
                     {
-                        string api_url = "http://epic.gsfc.nasa.gov/api/images.php?date=" + targeDate.ToString("yyyyMMdd");
-                        var raw_jason = client.DownloadString(api_url);
+                        // Start always with yesterday (not the beatles song!)
+                        DateTime targeDate = DateTime.Today.AddDays(0 - daysOld); //yesterday.
 
                         try
                         {
-                            var output = JsonConvert.DeserializeObject<IEnumerable<EarthImage>>(raw_jason);
-                            if (output.Any())
+                            // Build the URL for each day.
+                            string nasaUrl = xmlDocument.Element("earth").Element("searchurl").Value
+                                + targeDate.ToString("yyyyMMdd");
+
+                            // Get the JSON 
+                            string imageJson = client.DownloadString(nasaUrl);
+
+                            try
                             {
-                                runner = false;
-                                daysOld = 22;
-                                Console.WriteLine("Found at " + targeDate.ToString("yyyy-MM-dd"));
-                                LoadEarthImage(output, client);
-                                
-                                break;
+                                // Get all object of this day.
+                                IEnumerable<EarthImage> output = JsonConvert.DeserializeObject<IEnumerable<EarthImage>>(imageJson);
+
+                                // Anyone home?
+                                if (output.Any())
+                                {
+                                    // No need to run this again.
+                                    runner = false;
+                                    daysOld = 22;
+
+                                    Console.WriteLine("Found at " + targeDate.ToString("yyyy-MM-dd"));
+
+                                    // Load the image and set a wallpaper.
+                                    LoadEarthImage(output, client);
+
+                                    break;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Nothing found at " + targeDate.ToString("yyyy-MM-dd"));
+                                    daysOld++;
+                                }
                             }
-                            else
+                            catch
                             {
+                                // No image available for this day. Look at the next day.
                                 Console.WriteLine("Nothing found at " + targeDate.ToString("yyyy-MM-dd"));
                                 daysOld++;
                             }
                         }
-                        catch (Exception ex)
+                        catch
                         {
-                            Console.WriteLine("Nothing found at " + targeDate.ToString("yyyy-MM-dd"));
-                            daysOld++;
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        maxRetry++;
-                        Console.WriteLine("Unable to establish a connection.");
+                            // Unable to check for images. Retry again.
+                            maxRetry++;
+                            Console.WriteLine("Unable to establish a connection.");
 
-                        if (maxRetry == 5)
-                        {
-                            break;
+                            if (maxRetry == 5)
+                            {
+                                break;
+                            }
                         }
                     }
+                    else
+                    {
+                        runner = false;
+                        break;
+                    }
                 }
-                else
-                {
-                    runner = false;
-                    break;
-                }
+                while (runner);
             }
-            while (runner);
         }
 
+        /// <summary>
+        /// Get the image data depending on the settings.
+        /// </summary>
+        /// <param name="imageList">The list of earth images.</param>
+        /// <returns>Returns a single object or null.</returns>
+        private static EarthImage GetImageObject(IEnumerable<EarthImage> imageList)
+        {
+            XDocument xmlDocument = LoadXmlFile();
+
+            // Do we want a special timeframe?
+            if (xmlDocument.Element("earth").Element("besttime").Attribute("active").Value == "true")
+            {
+                // Get the start time.
+                DateTime startTime = DateTime.ParseExact(xmlDocument.Element("earth").Element("besttime").Value,
+                    "HH:mm:ss",
+                    System.Globalization.CultureInfo.InvariantCulture);
+
+                // Calc the end time.
+                DateTime endTime = startTime.AddHours(Convert.ToDouble(xmlDocument.Element("earth").Element("besttime").Attribute("maxhours").Value));
+
+                // Select the first object within the list.
+                return imageList.Where(c => c.date.TimeOfDay >= startTime.TimeOfDay && c.date.TimeOfDay <= endTime.TimeOfDay)
+                    .OrderByDescending(c => c.date)
+                    .FirstOrDefault();
+            }
+            else
+            {
+                // Return the the first object ordered by date.
+                return imageList.OrderByDescending(c => c.date).FirstOrDefault();
+            }
+        }
+
+        /// <summary>
+        /// Download the image and set as wallpaper.
+        /// </summary>
+        /// <param name="imageList">The earth image object list.</param>
+        /// <param name="client">The webclient object.</param>
         private static void LoadEarthImage(IEnumerable<EarthImage> imageList, WebClient client)
         {
-            EarthImage earth = imageList.OrderByDescending(c => c.date).FirstOrDefault();
+            XDocument xmlDocument = LoadXmlFile();
+            EarthImage earth = GetImageObject(imageList);
 
-            Console.WriteLine("The latest image " + earth.date);
+            if (earth != null)
+            {
+                Console.WriteLine("The latest image " + earth.date);
 
-            string imageUrl = @"http://epic.gsfc.nasa.gov/epic-archive/png/" + earth.image + ".png";
+                // Build the download url.
+                string imageUrl = @xmlDocument.Element("earth").Element("imagepath").Value + earth.image + ".png";
 
-            Console.WriteLine("Loading image ... " + imageUrl);
-            Wallpaper.Set(imageUrl, Wallpaper.Style.Filled, client);
-            Console.WriteLine("Done.");
+                Console.WriteLine("Loading image ... " + imageUrl);
+
+                // Get the wallpaper settings.
+                var style = xmlDocument.Elements("earth")
+                    .Elements("wallpaperstyle")
+                    .Elements("style")
+                    .Where(c => c.Attribute("active").Value == "true")
+                    .FirstOrDefault();
+
+                Wallpaper.Set(imageUrl, client, style.Attribute("WallpaperStyle").Value, style.Attribute("TileWallpaper").Value);
+
+                Console.WriteLine("Done.");
+            }
+            else
+            {
+                Console.WriteLine("No new image within the timerange available.");
+            }
         }
 
+        /// <summary>
+        /// Load the settings.xml file.
+        /// </summary>
+        /// <returns>Returns the xdocument.</returns>
+        private static XDocument LoadXmlFile()
+        {
+            XDocument xmlDocument = null;
+
+            if (File.Exists("Settings.xml"))
+            {
+                xmlDocument = XDocument.Load("Settings.xml");
+            }
+            else
+            {
+                Console.WriteLine("No settings.xml file available.");
+            }
+
+            return xmlDocument;
+        }
+
+        /// <summary>
+        /// Main entry point.
+        /// </summary>
+        /// <param name="args"></param>
         private static void Main(string[] args)
         {
             MinimizeConsoleWindow();
             FindLatestImage();
         }
 
+        /// <summary>
+        /// Minimize the window.
+        /// </summary>
         private static void MinimizeConsoleWindow()
         {
             IntPtr hWndConsole = GetConsoleWindow();

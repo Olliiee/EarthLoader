@@ -5,6 +5,9 @@ using Microsoft.Win32;
 
 namespace EarthLoader
 {
+    /// <summary>
+    /// Get and set the wallpaper.
+    /// </summary>
     public class Wallpaper
     {
         #region Private Fields
@@ -15,53 +18,33 @@ namespace EarthLoader
 
         #endregion Private Fields
 
-        #region Public Enums
-
-        public enum Style
-        {
-            Tiled,
-            Centered,
-            Stretched,
-            Filled
-        }
-
-        #endregion Public Enums
-
         #region Public Methods
 
-        public static void Set(string uri, Style style, WebClient client)
+        /// <summary>
+        /// Download and set the new wallpaper.
+        /// </summary>
+        /// <param name="uri">The uri for the image.</param>
+        /// <param name="client">The webclient.</param>
+        /// <param name="wallpaperStyle">The wallpaper style (centered, tiled, ..)</param>
+        /// <param name="tileWallpaper">The wallpaper tile setting.</param>
+        public static void Set(string uri, WebClient client, string wallpaperStyle, string tileWallpaper)
         {
-            System.IO.Stream s = client.OpenRead(uri);
+            // Create a stream to load the image.
+            Stream s = client.OpenRead(uri);
 
+            // Create an image depending on the stream.
             System.Drawing.Image img = System.Drawing.Image.FromStream(s);
+
+            // Save the file to the users temp folder.
             string tempPath = Path.Combine(Path.GetTempPath(), "wallpaper.bmp");
             img.Save(tempPath, System.Drawing.Imaging.ImageFormat.Bmp);
 
             RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
-            if (style == Style.Stretched)
-            {
-                key.SetValue(@"WallpaperStyle", 2.ToString());
-                key.SetValue(@"TileWallpaper", 0.ToString());
-            }
 
-            if (style == Style.Centered)
-            {
-                key.SetValue(@"WallpaperStyle", 1.ToString());
-                key.SetValue(@"TileWallpaper", 0.ToString());
-            }
+            key.SetValue(@"WallpaperStyle", wallpaperStyle);
+            key.SetValue(@"TileWallpaper", tileWallpaper);
 
-            if (style == Style.Tiled)
-            {
-                key.SetValue(@"WallpaperStyle", 1.ToString());
-                key.SetValue(@"TileWallpaper", 1.ToString());
-            }
-
-            if (style == Style.Filled)
-            {
-                key.SetValue(@"WallpaperStyle", 10.ToString());
-                key.SetValue(@"TileWallpaper", 0.ToString());
-            }
-
+            // Set the new wallpaper.
             SystemParametersInfo(SPI_SETDESKWALLPAPER,
                 0,
                 tempPath,
