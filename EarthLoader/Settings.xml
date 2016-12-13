@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <earth>
-  <searchurl>http://epic.gsfc.nasa.gov/api/images.php?date=</searchurl>
+  <searchurl>http://epic.gsfc.nasa.gov/api/natural/date/</searchurl>
   <imagepath>http://epic.gsfc.nasa.gov/epic-archive/png/</imagepath>
   <wallpaperstyle>
     <style TileWallpaper="0" WallpaperStyle="10" active="true">Filled</style>
@@ -8,5 +8,6 @@
     <style TileWallpaper="0" WallpaperStyle="2" active="false">Stretched</style>
     <style TileWallpaper="0" WallpaperStyle="1" active="false">Centered</style>
   </wallpaperstyle>
-  <besttime active="true" maxhours="4">12:00:00</besttime>
+  <besttime active="true" maxhours="4">10:00:00</besttime>
+  <maxretry>15</maxretry>
 </earth>

@@ -30,6 +30,7 @@ namespace EarthLoader
         public static void Set(string uri, WebClient client, string wallpaperStyle, string tileWallpaper)
         {
             // Create a stream to load the image.
+            client.Headers.Add("User-Agent: Other");
             Stream s = client.OpenRead(uri);
 
             // Create an image depending on the stream.

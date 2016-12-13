@@ -38,8 +38,10 @@ namespace EarthLoader
             bool runner = true;
             WebClient client = new WebClient();
             int daysOld = 0;
-            int maxRetry = 0;
+            int maxRetryCount = 0;
             XDocument xmlDocument = LoadXmlFile();
+
+            int maxRetry = Convert.ToInt32(xmlDocument.Element("earth").Element("maxretry").Value);
 
             // If the settings.xml file is available go on.
             if (xmlDocument != null)
@@ -61,7 +63,8 @@ namespace EarthLoader
                                 + targeDate.ToString("yyyyMMdd");
 
                             // Get the JSON 
-                            string imageJson = client.DownloadString(nasaUrl);
+                            client.Headers.Add("User-Agent: Other");
+                            var imageJson = client.DownloadString(nasaUrl);
 
                             try
                             {
@@ -95,13 +98,13 @@ namespace EarthLoader
                                 daysOld++;
                             }
                         }
-                        catch
+                        catch (Exception ex)
                         {
                             // Unable to check for images. Retry again.
-                            maxRetry++;
+                            maxRetryCount++;
                             Console.WriteLine("Unable to establish a connection.");
 
-                            if (maxRetry == 5)
+                            if (maxRetryCount == maxRetry)
                             {
                                 break;
                             }
