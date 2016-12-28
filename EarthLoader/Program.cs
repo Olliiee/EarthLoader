@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
 using Newtonsoft.Json;
@@ -41,11 +42,11 @@ namespace EarthLoader
             int maxRetryCount = 0;
             XDocument xmlDocument = LoadXmlFile();
 
-            int maxRetry = Convert.ToInt32(xmlDocument.Element("earth").Element("maxretry").Value);
-
             // If the settings.xml file is available go on.
             if (xmlDocument != null)
             {
+                int maxRetry = Convert.ToInt32(xmlDocument.Element("earth").Element("maxretry").Value);
+
                 Console.WriteLine("Checking for the latest earth image ...");
 
                 do
@@ -196,9 +197,9 @@ namespace EarthLoader
         {
             XDocument xmlDocument = null;
 
-            if (File.Exists("Settings.xml"))
+            if (File.Exists(System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\Settings.xml"))
             {
-                xmlDocument = XDocument.Load("Settings.xml");
+                xmlDocument = XDocument.Load(System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\Settings.xml");
             }
             else
             {
