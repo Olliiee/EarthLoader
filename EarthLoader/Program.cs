@@ -32,7 +32,7 @@ namespace EarthLoader
         #region Private Methods
 
         /// <summary>
-        /// Find the latest NASA image.
+        /// Find the latest NASA image. 
         /// </summary>
         private static void FindLatestImage()
         {
@@ -61,9 +61,9 @@ namespace EarthLoader
                         {
                             // Build the URL for each day.
                             string nasaUrl = xmlDocument.Element("earth").Element("searchurl").Value
-                                + targeDate.ToString("yyyyMMdd");
+                                + targeDate.ToString("yyyy-MM-dd");
 
-                            // Get the JSON 
+                            // Get the JSON
                             client.Headers.Add("User-Agent: Other");
                             var imageJson = client.DownloadString(nasaUrl);
 
@@ -122,10 +122,10 @@ namespace EarthLoader
         }
 
         /// <summary>
-        /// Get the image data depending on the settings.
+        /// Get the image data depending on the settings. 
         /// </summary>
-        /// <param name="imageList">The list of earth images.</param>
-        /// <returns>Returns a single object or null.</returns>
+        /// <param name="imageList"> The list of earth images. </param>
+        /// <returns> Returns a single object or null. </returns>
         private static EarthImage GetImageObject(IEnumerable<EarthImage> imageList)
         {
             XDocument xmlDocument = LoadXmlFile();
@@ -154,10 +154,10 @@ namespace EarthLoader
         }
 
         /// <summary>
-        /// Download the image and set as wallpaper.
+        /// Download the image and set as wallpaper. 
         /// </summary>
-        /// <param name="imageList">The earth image object list.</param>
-        /// <param name="client">The webclient object.</param>
+        /// <param name="imageList"> The earth image object list. </param>
+        /// <param name="client">    The webclient object. </param>
         private static void LoadEarthImage(IEnumerable<EarthImage> imageList, WebClient client)
         {
             XDocument xmlDocument = LoadXmlFile();
@@ -168,7 +168,12 @@ namespace EarthLoader
                 Console.WriteLine("The latest image " + earth.date);
 
                 // Build the download url.
-                string imageUrl = @xmlDocument.Element("earth").Element("imagepath").Value + earth.image + ".png";
+                string imageUrl = @xmlDocument.Element("earth").Element("imagepath").Value
+                    + earth.date.ToString("yyyy")
+                    + "/"
+                    + earth.date.ToString("MM") + "/"
+                    + earth.date.ToString("dd") + "/png/"
+                    + earth.image + ".png";
 
                 Console.WriteLine("Loading image ... " + imageUrl);
 
@@ -190,9 +195,9 @@ namespace EarthLoader
         }
 
         /// <summary>
-        /// Load the settings.xml file.
+        /// Load the settings.xml file. 
         /// </summary>
-        /// <returns>Returns the xdocument.</returns>
+        /// <returns> Returns the xdocument. </returns>
         private static XDocument LoadXmlFile()
         {
             XDocument xmlDocument = null;
@@ -210,7 +215,7 @@ namespace EarthLoader
         }
 
         /// <summary>
-        /// Main entry point.
+        /// Main entry point. 
         /// </summary>
         /// <param name="args"></param>
         private static void Main(string[] args)
@@ -220,7 +225,7 @@ namespace EarthLoader
         }
 
         /// <summary>
-        /// Minimize the window.
+        /// Minimize the window. 
         /// </summary>
         private static void MinimizeConsoleWindow()
         {

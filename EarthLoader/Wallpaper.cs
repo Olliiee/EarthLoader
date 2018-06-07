@@ -6,7 +6,7 @@ using Microsoft.Win32;
 namespace EarthLoader
 {
     /// <summary>
-    /// Get and set the wallpaper.
+    /// Get and set the wallpaper. 
     /// </summary>
     public class Wallpaper
     {
@@ -21,35 +21,42 @@ namespace EarthLoader
         #region Public Methods
 
         /// <summary>
-        /// Download and set the new wallpaper.
+        /// Download and set the new wallpaper. 
         /// </summary>
-        /// <param name="uri">The uri for the image.</param>
-        /// <param name="client">The webclient.</param>
-        /// <param name="wallpaperStyle">The wallpaper style (centered, tiled, ..)</param>
-        /// <param name="tileWallpaper">The wallpaper tile setting.</param>
+        /// <param name="uri">            The uri for the image. </param>
+        /// <param name="client">         The webclient. </param>
+        /// <param name="wallpaperStyle"> The wallpaper style (centered, tiled, ..) </param>
+        /// <param name="tileWallpaper">  The wallpaper tile setting. </param>
         public static void Set(string uri, WebClient client, string wallpaperStyle, string tileWallpaper)
         {
             // Create a stream to load the image.
-            client.Headers.Add("User-Agent: Other");
-            Stream s = client.OpenRead(uri);
+            try
+            {
+                client.Headers.Add("User-Agent: Other");
+                Stream s = client.OpenRead(uri);
 
-            // Create an image depending on the stream.
-            System.Drawing.Image img = System.Drawing.Image.FromStream(s);
+                // Create an image depending on the stream.
+                System.Drawing.Image img = System.Drawing.Image.FromStream(s);
 
-            // Save the file to the users temp folder.
-            string tempPath = Path.Combine(Path.GetTempPath(), "wallpaper.bmp");
-            img.Save(tempPath, System.Drawing.Imaging.ImageFormat.Bmp);
+                // Save the file to the users temp folder.
+                string tempPath = Path.Combine(Path.GetTempPath(), "wallpaper.bmp");
+                img.Save(tempPath, System.Drawing.Imaging.ImageFormat.Bmp);
 
-            RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
+                RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
 
-            key.SetValue(@"WallpaperStyle", wallpaperStyle);
-            key.SetValue(@"TileWallpaper", tileWallpaper);
+                key.SetValue(@"WallpaperStyle", wallpaperStyle);
+                key.SetValue(@"TileWallpaper", tileWallpaper);
 
-            // Set the new wallpaper.
-            SystemParametersInfo(SPI_SETDESKWALLPAPER,
-                0,
-                tempPath,
-                SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+                // Set the new wallpaper.
+                SystemParametersInfo(SPI_SETDESKWALLPAPER,
+                    0,
+                    tempPath,
+                    SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+            }
+            catch (System.Exception)
+            {
+                throw;
+            }
         }
 
         #endregion Public Methods
